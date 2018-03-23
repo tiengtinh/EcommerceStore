@@ -28,7 +28,7 @@ async function listenContractEvents() {
           { _id: result.args.id.toString() },
           {
             $set: {
-              store: result.args.store.toString(), 
+              store: result.args.store.toString(),
               name: result.args.name.toString(),
               category: result.args.category.toString(),
               imageLink: result.args.imageLink.toString(),
