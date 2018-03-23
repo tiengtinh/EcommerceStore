@@ -4,6 +4,7 @@ contract EcommerceStore {
     enum ProductStatus {Sold, Unsold, Buying}
 
     event ProductCreated(
+        address store,
         uint id, string name, string category, string imageLink, string desc, uint price, ProductStatus status
     );
 
@@ -31,7 +32,7 @@ contract EcommerceStore {
         Product memory product = Product(productIndex, _name, _category, _imageLink, _desc, _price, ProductStatus.Unsold);
         stores[msg.sender][productIndex] = product;
         productIdInStore[productIndex] = msg.sender;
-        ProductCreated(productIndex, _name, _category, _imageLink, _desc, _price, ProductStatus.Unsold);
+        ProductCreated(msg.sender, productIndex, _name, _category, _imageLink, _desc, _price, ProductStatus.Unsold);
     }
 
     function getProduct(uint _productId) view public returns (
