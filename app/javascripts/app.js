@@ -5,6 +5,9 @@ import "../stylesheets/app.css";
 // Import libraries we need.
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
+import ipfsAPI from 'ipfs-api'
+
+const ipfs = ipfsAPI('localhost', '5001')
 
 // Import our contract artifacts and turn them into usable abstractions.
 import ecommerce_store_artifacts from '../../build/contracts/EcommerceStore.json'
@@ -30,20 +33,20 @@ window.App = {
 
     console.log('Get the initial account balance')
     // Get the initial account balance so it can be displayed.
-    web3.eth.getAccounts(function(err, accs) {
+    web3.eth.getAccounts(function (err, accs) {
       if (err != null) {
-        alert("There was an error fetching your accounts.");
-        return;
+        alert("There was an error fetching your accounts.")
+        return
       }
 
       if (accs.length == 0) {
         alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-        return;
+        return
       }
 
-      accounts = accs;
-      account = accounts[0];
-    });
+      accounts = accs
+      account = accounts[0]
+    })
 
     this.listenContractEvents().catch(err => console.error('listenContractEvents error: ', err))
 
@@ -57,7 +60,6 @@ window.App = {
     })
 
     $('#product-create-form').submit((event) => {
-      console.log('form')
       event.preventDefault()
 
       this.createProduct(reader).catch(err => console.log('createProduct error: ', err))
@@ -95,7 +97,7 @@ window.App = {
       name, category, imageId, desc, price
     })
     const result = await instance.addProduct(
-      name, category, imageId, desc, price,
+      name, category, imageId, desc, web3.toWei(price, 'ether'),
     )
     console.log('createProduct result: ', result)
   },
