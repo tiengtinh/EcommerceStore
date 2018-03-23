@@ -23,3 +23,36 @@ Private Keys:
 (9) 8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5
 
 Mnemonic: candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
+
+
+initializing IPFS node at /home/tinhngo/.ipfs
+generating 2048-bit RSA keypair...done
+peer identity: QmYv33ZSZ1SkCebQqoCJKL1xRgwAZCGMk1dP6WZqQAkYXe
+to get started, enter:
+
+	ipfs cat /ipfs/QmS4ustL54uo8FzR9455qaxZwuMiUhyvMcX9Ba8nUH4uVv/readme
+
+Initializing daemon...
+Adjusting current ulimit to 2048...
+Successfully raised file descriptor limit to 2048.
+Swarm listening on /ip4/127.0.0.1/tcp/4001
+Swarm listening on /ip4/172.17.0.1/tcp/4001
+Swarm listening on /ip4/172.18.0.1/tcp/4001
+Swarm listening on /ip4/172.19.0.1/tcp/4001
+Swarm listening on /ip4/172.20.0.1/tcp/4001
+Swarm listening on /ip4/172.21.0.1/tcp/4001
+Swarm listening on /ip4/172.22.0.1/tcp/4001
+Swarm listening on /ip4/192.168.9.121/tcp/4001
+Swarm listening on /ip6/::1/tcp/4001
+Swarm listening on /p2p-circuit/ipfs/QmYv33ZSZ1SkCebQqoCJKL1xRgwAZCGMk1dP6WZqQAkYXe
+Swarm announcing /ip4/127.0.0.1/tcp/4001
+Swarm announcing /ip4/172.17.0.1/tcp/4001
+Swarm announcing /ip4/172.18.0.1/tcp/4001
+Swarm announcing /ip4/172.19.0.1/tcp/4001
+Swarm announcing /ip4/172.20.0.1/tcp/4001
+Swarm announcing /ip4/172.21.0.1/tcp/4001
+Swarm announcing /ip4/172.22.0.1/tcp/4001
+Swarm announcing /ip4/192.168.9.121/tcp/4001
+Swarm announcing /ip6/::1/tcp/4001
+API server listening on /ip4/127.0.0.1/tcp/5001
+Gateway (readonly) server listening on /ip4/127.0.0.1/tcp/8080

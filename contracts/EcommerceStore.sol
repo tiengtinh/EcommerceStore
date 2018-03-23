@@ -18,8 +18,6 @@ contract EcommerceStore {
         ProductStatus status;
     }
 
-    
-
     function EcommerceStore() public {
         productIndex = 0;
     }
