@@ -18,13 +18,17 @@ var EcommerceStore = contract(ecommerce_store_artifacts);
 var accounts;
 var account;
 
+let products = []
+
 window.App = {
-  start: function() {
+  start: async function() {
     var self = this;
 
     // Bootstrap the MetaCoin abstraction for Use.
     EcommerceStore.setProvider(web3.currentProvider);
+    EcommerceStore.web3.eth.defaultAccount = web3.eth.accounts[0]
 
+    console.log('Get the initial account balance')
     // Get the initial account balance so it can be displayed.
     web3.eth.getAccounts(function(err, accs) {
       if (err != null) {
@@ -39,14 +43,66 @@ window.App = {
 
       accounts = accs;
       account = accounts[0];
-
-      self.refreshBalance();
     });
+
+    this.listenContractEvents().catch(err => console.error('listenContractEvents error: ', err))
+
+    console.log('binding page events')
+
+    let reader
+    $('#image').on('change', function (event) {
+      const file = event.target.files[0]
+      reader = new window.FileReader()
+      reader.readAsArrayBuffer(file)
+    })
+
+    $('#product-create-form').submit((event) => {
+      console.log('form')
+      event.preventDefault()
+
+      this.createProduct(reader).catch(err => console.log('createProduct error: ', err))
+    })
   },
 
-  setStatus: function(message) {
-    var status = document.getElementById("status");
-    status.innerHTML = message;
+  async listenContractEvents () {
+    console.log('getting EcommerceStore instance')
+
+    const instance = await EcommerceStore.deployed()
+
+    console.log('listen to contract events')
+
+    const productCreatedEvent = instance.ProductCreated()
+    productCreatedEvent.watch((err, result) => {
+      console.log('productCreatedEvent', err, result)
+    })
+  },
+
+  async createProduct (reader) {
+    const instance = await EcommerceStore.deployed()
+
+    let imageId = ''
+    if (reader) {
+      const resp = await this.saveImageOnIpfs(reader)
+      imageId = resp[0].hash
+    }
+
+    const name = $('#name').val()
+    const category = $('#category').val()
+    const desc = $('#desc').val()
+    const price = parseInt($('#price').val())
+
+    console.log({
+      name, category, imageId, desc, price
+    })
+    const result = await instance.addProduct(
+      name, category, imageId, desc, price,
+    )
+    console.log('createProduct result: ', result)
+  },
+
+  saveImageOnIpfs (reader) {
+    const buffer = Buffer.from(reader.result)
+    return ipfs.add(buffer)
   },
 
   refreshBalance: function() {
@@ -87,7 +143,7 @@ window.App = {
   }
 };
 
-window.addEventListener('load', function() {
+window.addEventListener('load', async function() {
   // Checking if Web3 has been injected by the browser (Mist/MetaMask)
   if (typeof web3 !== 'undefined') {
     console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
@@ -99,5 +155,5 @@ window.addEventListener('load', function() {
     window.web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:9545"));
   }
 
-  App.start();
+  await App.start()
 });

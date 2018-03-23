@@ -3,6 +3,10 @@ pragma solidity ^0.4.17;
 contract EcommerceStore {
     enum ProductStatus {Sold, Unsold, Buying}
 
+    event ProductCreated(
+        uint id, string name, string category, string imageLink, string desc, uint price, ProductStatus status
+    );
+
     uint public productIndex;
 
     mapping (address => mapping (uint => Product)) stores;
@@ -14,7 +18,7 @@ contract EcommerceStore {
         string category;
         string imageLink;
         string desc;
-        uint price;
+        uint price; // in ETH
         ProductStatus status;
     }
 
@@ -27,6 +31,7 @@ contract EcommerceStore {
         Product memory product = Product(productIndex, _name, _category, _imageLink, _desc, _price, ProductStatus.Unsold);
         stores[msg.sender][productIndex] = product;
         productIdInStore[productIndex] = msg.sender;
+        ProductCreated(productIndex, _name, _category, _imageLink, _desc, _price, ProductStatus.Unsold);
     }
 
     function getProduct(uint _productId) view public returns (
