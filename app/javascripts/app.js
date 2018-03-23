@@ -99,20 +99,25 @@ window.App = {
   },
 
   renderProduct (product) {
+    const isSeller = product.store === account
     return `
       <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card h-100">
+        <div class="card h-100 product">
           <a href="#"><img class="card-img-top" src="http://localhost:8080/ipfs/${product.imageLink}" alt=""></a>
           <div class="card-body">
             <h4 class="card-title">
-              <a href="#">${product.name}</a>
+              ${product.name}
             </h4>
             <h5>${web3.fromWei(product.price, 'ether')} ETH</h5>
+            <button type="button" class="btn btn-primary btn-buy">
+              Buy <span class="badge badge-light">1</span>
+            </button>
             <p class="card-text">${product.desc}</p>
           </div>
           <div class="card-footer">
             <span class="badge badge-secondary">${product.category}</span>
             ${this.renderStatusBadge(product.status)}
+            ${isSeller ? '<span class="badge badge-info">You\'r seller</span>' : ''}
           </div>
         </div>
       </div>`
@@ -175,57 +180,22 @@ window.App = {
   saveImageOnIpfs (reader) {
     const buffer = Buffer.from(reader.result)
     return ipfs.add(buffer)
-  },
-
-  refreshBalance: function() {
-    var self = this;
-
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.getBalance.call(account, {from: account});
-    }).then(function(value) {
-      var balance_element = document.getElementById("balance");
-      balance_element.innerHTML = value.valueOf();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error getting balance; see log.");
-    });
-  },
-
-  sendCoin: function() {
-    var self = this;
-
-    var amount = parseInt(document.getElementById("amount").value);
-    var receiver = document.getElementById("receiver").value;
-
-    this.setStatus("Initiating transaction... (please wait)");
-
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.sendCoin(receiver, amount, {from: account});
-    }).then(function() {
-      self.setStatus("Transaction complete!");
-      self.refreshBalance();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error sending coin; see log.");
-    });
   }
-};
+}
 
 window.addEventListener('load', async function() {
   // Checking if Web3 has been injected by the browser (Mist/MetaMask)
   if (typeof web3 !== 'undefined') {
-    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
+    console.warn('Using web3 detected from external source.' +
+      ' If you find that your accounts don\'t appear or you have 0 MetaCoin, ensure you\'ve configured that source properly.' +
+      ' If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask')
     // Use Mist/MetaMask's provider
-    window.web3 = new Web3(web3.currentProvider);
+    window.web3 = new Web3(web3.currentProvider)
   } else {
-    console.warn("No web3 detected. Falling back to http://127.0.0.1:9545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
+    console.warn("No web3 detected. Falling back to http://127.0.0.1:9545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask")
     // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:9545"));
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:9545"))
   }
 
   await App.start()
-});
+})

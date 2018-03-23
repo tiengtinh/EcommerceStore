@@ -21,3 +21,13 @@ body {
 .products .card-img-top {
   height: 160px;
 }
+
+.product {
+  position: relative;
+}
+
+.product .btn-buy {
+  position: absolute;
+  right: 20px;
+  bottom: 65px;
+}
