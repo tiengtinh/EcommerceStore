@@ -109,9 +109,11 @@ window.App = {
               ${product.name}
             </h4>
             <h5>${web3.fromWei(product.price, 'ether')} ETH</h5>
-            <button type="button" class="btn btn-primary btn-buy">
-              Buy <span class="badge badge-light">1</span>
-            </button>
+            ${
+              !isSeller ? `<button type="button" class="btn btn-primary btn-buy">
+                Buy <span class="badge badge-light">1</span>
+              </button>` : ''
+            }
             <p class="card-text">${product.desc}</p>
           </div>
           <div class="card-footer">

@@ -1,15 +1,15 @@
 pragma solidity ^0.4.17;
 
 contract EscrowFactory {
-    event EscrowCreated(address newAddress);
+    event EscrowCreated(address newAddress, uint productId);
 
     function EscrowFactory() public {
 
     }
 
-    function createEscrow(address seller) public payable {
+    function createEscrow(address seller, uint productId) public payable {
         address a = address((new Escrow).value(msg.value)(seller));
-        EscrowCreated(a);
+        EscrowCreated(a, productId);
     }
 }
 
