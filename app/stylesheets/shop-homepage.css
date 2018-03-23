@@ -17,3 +17,7 @@ body {
 .products {
   margin-top: 95px;
 }
+
+.products .card-img-top {
+  height: 160px;
+}
