@@ -6,14 +6,18 @@ import "../stylesheets/app.css";
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 import ipfsAPI from 'ipfs-api'
+const BigNumber = require('bignumber.js')
 
 const ipfs = ipfsAPI('localhost', '5001')
 
 // Import our contract artifacts and turn them into usable abstractions.
 import ecommerce_store_artifacts from '../../build/contracts/EcommerceStore.json'
+import escrow_factory_artifacts from '../../build/contracts/EscrowFactory.json'
+import escrow_artifacts from '../../build/contracts/Escrow.json'
 
-// MetaCoin is our usable abstraction, which we'll use through the code below.
 var EcommerceStore = contract(ecommerce_store_artifacts);
+var EscrowFactory = contract(escrow_factory_artifacts);
+var Escrow = contract(escrow_artifacts);
 
 // The following code is simple to show off interacting with your contracts.
 // As your needs grow you will likely need to change its form and structure.
@@ -24,14 +28,22 @@ var account;
 let _products = []
 let _$products
 
+const ProductStatus = {
+  Sold: '0', Unsold: '1', Buying: '2'
+}
+
 window.App = {
   start: async function() {
     try {
       var self = this;
 
-      // Bootstrap the MetaCoin abstraction for Use.
+      // Bootstrap the contracts abstraction for Use.
       EcommerceStore.setProvider(web3.currentProvider);
       EcommerceStore.web3.eth.defaultAccount = web3.eth.accounts[0]
+      EscrowFactory.setProvider(web3.currentProvider);
+      EscrowFactory.web3.eth.defaultAccount = web3.eth.accounts[0]
+      Escrow.setProvider(web3.currentProvider);
+      Escrow.web3.eth.defaultAccount = web3.eth.accounts[0]
 
       console.log('Get the initial account balance')
       // Get the initial account balance so it can be displayed.
@@ -86,24 +98,30 @@ window.App = {
       return p
     })
 
-    this.renderProducts()
+    await this.renderProducts()
   },
 
   renderStatusBadge (status) {
     switch (status.toString()) {
-      case '0': return `<span class="badge badge-danger">Sold</span>`
-      case '1': return `<span class="badge badge-primary">Unsold</span>`
-      case '2': return `<span class="badge badge-warning">Buying</span>`
+      case ProductStatus.Sold: return `<span class="badge badge-danger">Sold</span>`
+      case ProductStatus.Unsold: return `<span class="badge badge-primary">Unsold</span>`
+      case ProductStatus.Buying: return `<span class="badge badge-warning">Buying</span>`
       default: throw new Error('not recognized status: ' + status.toString())
     }
   },
 
-  renderProduct (product) {
+  async renderProduct (product) {
     const isSeller = product.store === account
+
+    let isBuying = false
+    if (product.status.toString() === ProductStatus.Buying && !new BigNumber(product.escrow).equals(0)) {
+      isBuying = true
+    }
+
     return `
       <div class="col-lg-4 col-md-6 mb-4">
         <div class="card h-100 product">
-          <a href="#"><img class="card-img-top" src="http://localhost:8080/ipfs/${product.imageLink}" alt=""></a>
+          <img class="card-img-top" src="http://localhost:8080/ipfs/${product.imageLink}" alt="">
           <div class="card-body">
             <h4 class="card-title">
               ${product.name}
@@ -119,32 +137,55 @@ window.App = {
 
           <div class="actions">
           ${
-            !isSeller ? `<button type="button" class="btn btn-primary btn-action btn-buy">
+            !isSeller && !isBuying ? `<button type="button" class="btn btn-primary btn-action" onclick="App.buy(${ product.id })">
               Buy <span class="badge badge-light">1</span>
             </button>` : ''
+          }
+          ${
+            isBuying ? `
+            <button type="button" class="btn btn-danger btn-action" onclick="App.rejectEscrow(${ product.id })">
+              Reject
+            </button>
+            <button type="button" class="btn btn-success btn-action" onclick="App.acceptEscrow(${ product.id })">
+              Accept
+            </button>
+            ` : ''
           }
           </div>
         </div>
       </div>`
   },
 
-  renderProducts () {
-    _$products.empty()
+  async renderProducts () {
+    const $tmp = $('<div/>')
     for (const product of _products) {
-      _$products.append(this.renderProduct(product))
+      const productRendered = await this.renderProduct(product)
+      $tmp.append(productRendered)
     }
+    _$products.empty()
+    _$products.append($tmp.html())
+  },
+
+  async buy(productId) {
+    console.log('buying productId: ', productId)
+
+    const product = _products.find((p) => p.id.toString() === productId.toString())
+
+    const instance = await EscrowFactory.deployed()
+    const result = await instance.createEscrow(product.store, productId, {
+      value: product.price,
+    })
+    console.log('buy result: ', result)
+    // alert('Buy requested!')
   },
 
   async listenContractEvents () {
-    console.log('getting EcommerceStore instance')
-
-    const instance = await EcommerceStore.deployed()
-
     console.log('listen to contract events')
 
-    const productCreatedEvent = instance.ProductCreated()
-    productCreatedEvent.watch((err, result) => {
-      console.log('productCreatedEvent', err, result)
+    const ecommerceStore = await EcommerceStore.deployed()
+
+    ecommerceStore.ProductCreated().watch((err, result) => {
+      console.log('ProductCreated', err, result)
 
       const product = result.args
 
@@ -156,6 +197,31 @@ window.App = {
       }
 
       this.renderProducts()
+    })
+
+    ecommerceStore.ProductStatusChanged().watch((err, result) => {
+      console.log('ProductStatusChanged', err, result)
+
+      const productId = result.args.id
+      const product = _products.find((p) => p.id.toString() === productId.toString())
+      product.status = result.args.status
+      product.escrow = result.args.escrow
+
+      this.renderProducts()
+    })
+
+    const escrowFactory = await EscrowFactory.deployed()
+
+    escrowFactory.EscrowCreated().watch(async (err, result) => {
+      console.log('EscrowCreated', err, result)
+
+      const productId = result.args.productId
+      const escrowAddress = result.args.newAddress
+      console.log({
+        productId, escrowAddress
+      })
+
+      await ecommerceStore.buyProductWithEscrow(productId, escrowAddress)
     })
   },
 
@@ -180,7 +246,7 @@ window.App = {
       name, category, imageId, desc, web3.toWei(price, 'ether'),
     )
     console.log('createProduct result: ', result)
-    alert('product created!')
+    alert('Product created!')
   },
 
   saveImageOnIpfs (reader) {

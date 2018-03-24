@@ -8,19 +8,20 @@ const connectMgo = require('./connectMgo')
 const provider = new Web3.providers.HttpProvider("http://127.0.0.1:9545")
 const web3 = new Web3(provider)
 
-// const ecommerce_store_artifacts = require('./build/contracts/EcommerceStore.json')
 const EcommerceStore = contract(JSON.parse(fs.readFileSync('./build/contracts/EcommerceStore.json', 'utf8')))
 EcommerceStore.setProvider(provider)
+// const EscrowFactory = contract(JSON.parse(fs.readFileSync('./build/contracts/EscrowFactory.json', 'utf8')))
+// EscrowFactory.setProvider(provider)
 
 async function listenContractEvents() {
-    const instance = await EcommerceStore.deployed()
+    const ecommerceStore = await EcommerceStore.deployed()
 
-    instance.ProductCreated().watch(async (err, result) => {
+    ecommerceStore.ProductCreated().watch(async (err, result) => {
       if (err) {
-        return console.error('productCreatedEvent err: ', err)
+        return console.error('ProductCreated err: ', err)
       }
 
-      console.log('productCreatedEvent result: ', JSON.stringify(result.args))
+      console.log('ProductCreated result: ', JSON.stringify(result.args))
 
       try {
         const db = await connectMgo()
@@ -34,13 +35,38 @@ async function listenContractEvents() {
               imageLink: result.args.imageLink.toString(),
               desc: result.args.desc.toString(),
               price: result.args.price.toString(),
-              status: result.args.status.toString()
+              status: result.args.status.toString(),
+              escrow: '0x0000000000000000000000000000000000000000',
             }
           },
           { upsert: true },
         )
       } catch (err) {
-        console.error('productCreatedEvent error: ', err)
+        console.error('ProductCreated error: ', err)
+      }
+    })
+
+    ecommerceStore.ProductStatusChanged().watch(async (err, result) => {
+      if (err) {
+        return console.error('ProductStatusChanged err: ', err)
+      }
+
+      console.log('ProductStatusChanged result: ', JSON.stringify(result.args))
+
+      try {
+        const db = await connectMgo()
+        await db.collection('products').updateOne(
+          { _id: result.args.id.toString() },
+          {
+            $set: {
+              status: result.args.status.toString(),
+              escrow: result.args.escrow.toString(),
+            }
+          },
+          { upsert: true },
+        )
+      } catch (err) {
+        console.error('ProductStatusChanged err: ', err)
       }
     })
 }

@@ -22,3 +22,5 @@ truffle console
 `npm run dev` to start server + frontend concurrently
 
 Buy button is visible only if you're not the one who posted the product (meaning you're seller)
+
+After clicking the buy button, you will be requested to confirm transaction by MetaMask twice. Once for Escrow creation. Another for product status update.

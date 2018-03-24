@@ -31,6 +31,7 @@ contract Escrow {
     }
 
     function accept() public {
+        require(msg.sender == buyer || msg.sender == seller);
         if (msg.sender == buyer) {
             buyerDecision = Decision.Accept;
         }
@@ -41,6 +42,8 @@ contract Escrow {
     }
 
     function reject() public {
+        require(msg.sender == buyer || msg.sender == seller);
+
         if (msg.sender == buyer) {
             buyerDecision = Decision.Reject;
         }

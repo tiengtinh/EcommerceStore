@@ -27,10 +27,11 @@ body {
 }
 
 .product .actions {
-  opacity: 0.5;
+  opacity: 0.7;
   position: absolute;
   right: 5px;
   top: 5px;
+  transition: opacity .2s ease-in-out;
 }
 
 .product:hover .actions {
