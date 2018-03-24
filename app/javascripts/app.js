@@ -109,17 +109,20 @@ window.App = {
               ${product.name}
             </h4>
             <h5>${web3.fromWei(product.price, 'ether')} ETH</h5>
-            ${
-              !isSeller ? `<button type="button" class="btn btn-primary btn-buy">
-                Buy <span class="badge badge-light">1</span>
-              </button>` : ''
-            }
             <p class="card-text">${product.desc}</p>
           </div>
           <div class="card-footer">
             <span class="badge badge-secondary">${product.category}</span>
             ${this.renderStatusBadge(product.status)}
             ${isSeller ? '<span class="badge badge-info">You\'r seller</span>' : ''}
+          </div>
+
+          <div class="actions">
+          ${
+            !isSeller ? `<button type="button" class="btn btn-primary btn-action btn-buy">
+              Buy <span class="badge badge-light">1</span>
+            </button>` : ''
+          }
           </div>
         </div>
       </div>`
@@ -177,6 +180,7 @@ window.App = {
       name, category, imageId, desc, web3.toWei(price, 'ether'),
     )
     console.log('createProduct result: ', result)
+    alert('product created!')
   },
 
   saveImageOnIpfs (reader) {

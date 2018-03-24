@@ -21,3 +21,22 @@ body {
 .products .card-img-top {
   height: 160px;
 }
+
+.product {
+  position: relative;
+}
+
+.product .actions {
+  opacity: 0.5;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+}
+
+.product:hover .actions {
+  opacity: 1;
+}
+
+.product .actions button {
+  float: right;
+}

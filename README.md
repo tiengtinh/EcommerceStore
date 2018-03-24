@@ -11,3 +11,14 @@ ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '["Authorization
 ipfs config --json API.HTTPHeaders.Access-Control-Expose-Headers '["Location"]'
 ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
 ```
+
+```
+truffle develop --log
+
+truffle console
+  migrate --reset
+```
+
+`npm run dev` to start server + frontend concurrently
+
+Buy button is visible only if you're not the one who posted the product (meaning you're seller)
