@@ -5,7 +5,7 @@ Some note on UI interactions:
 
 - Buy button is visible only if you're not the one who posted the product (meaning you're seller).
 
-- After clicking the buy button, you will be requested to confirm transaction by MetaMask twice. Once for Escrow creation. Another for product status update.
+- After buyer hit buy button. Both parties (buyer, seller) will be able to see Accept/Reject escrow buttons.
 
 ## Prerequisites
 
