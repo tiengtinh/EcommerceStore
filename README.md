@@ -1,5 +1,5 @@
 
-# CoderSchool Week 01 Assigment: Ecommerce Store
+# CoderSchool Week 02 Assigment: Ecommerce Store
 
 Some note on UI interactions:
 
