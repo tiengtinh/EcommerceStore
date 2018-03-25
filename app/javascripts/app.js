@@ -19,6 +19,8 @@ var EcommerceStore = contract(ecommerce_store_artifacts);
 var EscrowFactory = contract(escrow_factory_artifacts);
 var Escrow = contract(escrow_artifacts);
 
+import ProductDetails from './product-details'
+
 // The following code is simple to show off interacting with your contracts.
 // As your needs grow you will likely need to change its form and structure.
 // For application bootstrapping, check out window.addEventListener below.
@@ -62,6 +64,13 @@ window.App = {
         account = accounts[0]
       })
 
+      if ($('#product-details').length !== 0) {
+        await ProductDetails.start({
+          EcommerceStore, EscrowFactory, Escrow,
+        })
+        return
+      }
+
       console.log('binding page events')
 
       let reader
@@ -75,6 +84,18 @@ window.App = {
         event.preventDefault()
 
         this.createProduct(reader).catch(err => console.log('createProduct error: ', err))
+      })
+
+      $('.products').on('click', '.product .reject', (event) => {
+        if ($(event.target).hasClass('disabled')) return
+        const productId = $(event.target).parents('.product').data('id')
+        this.rejectEscrow(productId).catch(err => console.error('rejectEscrow error: ', err))
+      })
+
+      $('.products').on('click', '.product .accept', (event) => {
+        if ($(event.target).hasClass('disabled')) return
+        const productId = $(event.target).parents('.product').data('id')
+        this.acceptEscrow(productId).catch(err => console.error('acceptEscrow error: ', err))
       })
 
       _$products = $('.products')
@@ -98,7 +119,7 @@ window.App = {
       return p
     })
 
-    await this.renderProducts()
+    this.renderProducts()
   },
 
   renderStatusBadge (status) {
@@ -110,21 +131,37 @@ window.App = {
     }
   },
 
-  async renderProduct (product) {
+  renderProduct (product) {
     const isSeller = product.store === account
 
     let isBuying = false
+    // let selfDecisionMade = false
+    // let partnerDecisionMade = false
     if (product.status.toString() === ProductStatus.Buying && !new BigNumber(product.escrow).equals(0)) {
       isBuying = true
+
+      // const escrow = Escrow.at(product.escrow)
+      // const buyerDecision = await escrow.buyerDecision()
+      // const sellerDecision = await escrow.sellerDecision()
+
+      // if (isSeller && sellerDecision.toString() !== Decision.Undecided) {
+      //   selfDecisionMade = true
+      // }
+
+      // if (!isSeller && buyerDecision.toString() !== Decision.Undecided) {
+      //   partnerDecisionMade = true
+      // }
     }
 
     return `
       <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card h-100 product">
-          <img class="card-img-top" src="http://localhost:8080/ipfs/${product.imageLink}" alt="">
+        <div class="card h-100 product" data-id="${ product.id }">
+          <a href="/product-details.html?id=${ product.id }"><img class="card-img-top" src="http://localhost:8080/ipfs/${product.imageLink}" alt=""></a>
           <div class="card-body">
             <h4 class="card-title">
-              ${product.name}
+              <a href="/product-details.html?id=${ product.id }">
+                ${product.name}
+              </a>
             </h4>
             <h5>${web3.fromWei(product.price, 'ether')} ETH</h5>
             <p class="card-text">${product.desc}</p>
@@ -134,49 +171,42 @@ window.App = {
             ${this.renderStatusBadge(product.status)}
             ${isSeller ? '<span class="badge badge-info">You\'r seller</span>' : ''}
           </div>
-
-          <div class="actions">
-          ${
-            !isSeller && !isBuying ? `<button type="button" class="btn btn-primary btn-action" onclick="App.buy(${ product.id })">
-              Buy <span class="badge badge-light">1</span>
-            </button>` : ''
-          }
-          ${
-            isBuying ? `
-            <button type="button" class="btn btn-danger btn-action" onclick="App.rejectEscrow(${ product.id })">
-              Reject
-            </button>
-            <button type="button" class="btn btn-success btn-action" onclick="App.acceptEscrow(${ product.id })">
-              Accept
-            </button>
-            ` : ''
-          }
-          </div>
         </div>
       </div>`
   },
 
-  async renderProducts () {
+  renderProducts () {
+    if (_products.length === 0) {
+      _$products.append('<h2>No product</h2>')
+    }
+
     const $tmp = $('<div/>')
     for (const product of _products) {
-      const productRendered = await this.renderProduct(product)
+      const productRendered = this.renderProduct(product)
       $tmp.append(productRendered)
     }
     _$products.empty()
     _$products.append($tmp.html())
   },
 
-  async buy(productId) {
-    console.log('buying productId: ', productId)
+  async acceptEscrow(productId) {
+    console.log('acceptEscrow productId: ', productId)
 
     const product = _products.find((p) => p.id.toString() === productId.toString())
 
-    const instance = await EscrowFactory.deployed()
-    const result = await instance.createEscrow(product.store, productId, {
-      value: product.price,
-    })
-    console.log('buy result: ', result)
-    // alert('Buy requested!')
+    const instance = await Escrow.at(product.escrow)
+    const result = await instance.accept()
+    console.log('acceptEscrow result: ', result)
+  },
+
+  async rejectEscrow(productId) {
+    console.log('rejectEscrow productId: ', productId)
+
+    const product = _products.find((p) => p.id.toString() === productId.toString())
+
+    const instance = await Escrow.at(product.escrow)
+    const result = await instance.reject()
+    console.log('rejectEscrow result: ', result)
   },
 
   async listenContractEvents () {
@@ -208,20 +238,6 @@ window.App = {
       product.escrow = result.args.escrow
 
       this.renderProducts()
-    })
-
-    const escrowFactory = await EscrowFactory.deployed()
-
-    escrowFactory.EscrowCreated().watch(async (err, result) => {
-      console.log('EscrowCreated', err, result)
-
-      const productId = result.args.productId
-      const escrowAddress = result.args.newAddress
-      console.log({
-        productId, escrowAddress
-      })
-
-      await ecommerceStore.buyProductWithEscrow(productId, escrowAddress)
     })
   },
 

@@ -23,6 +23,10 @@ contract Escrow {
     Decision public buyerDecision;
     Decision public sellerDecision;
 
+    event BuyerDecided(Decision decision);
+    event SellerDecided(Decision decision);
+    event Concluded(Decision decision);
+
     function Escrow(address _seller) public payable {
         createdAt = now;
 
@@ -34,10 +38,17 @@ contract Escrow {
         require(msg.sender == buyer || msg.sender == seller);
         if (msg.sender == buyer) {
             buyerDecision = Decision.Accept;
+            BuyerDecided(Decision.Accept);
         }
 
         if (msg.sender == seller) {
             sellerDecision = Decision.Accept;
+            SellerDecided(Decision.Accept);
+        }
+
+        if (buyerDecision == Decision.Accept && sellerDecision == Decision.Accept) {
+            seller.transfer(address(this).balance);
+            Concluded(Decision.Accept);
         }
     }
 
@@ -46,10 +57,15 @@ contract Escrow {
 
         if (msg.sender == buyer) {
             buyerDecision = Decision.Reject;
+            BuyerDecided(Decision.Reject);
         }
 
         if (msg.sender == seller) {
             sellerDecision = Decision.Reject;
+            SellerDecided(Decision.Reject);
         }
+
+        buyer.transfer(address(this).balance);
+        Concluded(Decision.Reject);
     }
 }

@@ -41,3 +41,11 @@ body {
 .product .actions button {
   float: right;
 }
+
+.product-details-right {
+  margin-top: 88px;
+}
+
+.hide {
+  display: none;
+}

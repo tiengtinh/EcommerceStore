@@ -42,15 +42,25 @@ contract EcommerceStore {
     }
 
     function buyProductWithEscrow(uint _id, address _escrow) public {
-        stores[msg.sender][_id].status = ProductStatus.Buying;
-        stores[msg.sender][_id].escrow = _escrow;
+        address store = productIdInStore[_id];
+        stores[store][_id].status = ProductStatus.Buying;
+        stores[store][_id].escrow = _escrow;
         ProductStatusChanged(_id, ProductStatus.Buying, _escrow);
     }
 
+    function endProductBuying(uint _id, ProductStatus _status) public {
+        require(_status == ProductStatus.Sold || _status == ProductStatus.Unsold);
+        address store = productIdInStore[_id];
+        stores[store][_id].status = _status;
+        ProductStatusChanged(_id, _status, 0);
+    }
+
     function getProduct(uint _productId) view public returns (
+        address _store,
         uint _id, string _name, string _category, string _imageLink, string _desc, uint _price, ProductStatus _status, address _escrow
     ) {
-        Product memory product = stores[msg.sender][_productId];
-        return (product.id, product.name, product.category, product.imageLink, product.desc, product.price, product.status, product.escrow);
+        address store = productIdInStore[_productId];
+        Product memory product = stores[store][_productId];
+        return (store, product.id, product.name, product.category, product.imageLink, product.desc, product.price, product.status, product.escrow);
     }
 }
