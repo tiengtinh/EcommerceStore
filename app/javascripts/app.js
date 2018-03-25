@@ -187,7 +187,8 @@ window.App = {
 
   renderProducts () {
     if (_products.length === 0) {
-      _$products.append('<h2>No product</h2>')
+      _$products.html('<h2>No product</h2>')
+      return
     }
 
     const $tmp = $('<div/>')

@@ -18,6 +18,8 @@ const ProductStatus = {
   Sold: '0', Unsold: '1', Buying: '2'
 }
 
+const escrowCreatedTrigged = {}
+
 export default {
   async start({account, EcommerceStore, Escrow, EscrowFactory}) {
     this.account = account
@@ -89,8 +91,10 @@ export default {
 
         // only buyer who hit buy button would need to also make this call to update product status to buying
         if (this.isSeller()) return
+        if (escrowCreatedTrigged[escrowAddress]) return
 
         await ecommerceStore.buyProductWithEscrow(productId, escrowAddress)
+        escrowCreatedTrigged[escrowAddress] = true
       } catch (err) {
         console.error('EscrowCreated error: ', err)
       }

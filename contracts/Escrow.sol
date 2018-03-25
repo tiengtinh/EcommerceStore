@@ -53,9 +53,11 @@ contract Escrow {
             uint amount = address(this).balance;
             uint fee = amount / 100; // 1% fee
             uint sellerGetAmount = amount - fee;
+
+            Concluded(Decision.Accept);
+            
             seller.transfer(sellerGetAmount);
             feeTaker.transfer(fee);
-            Concluded(Decision.Accept);
         }
     }
 
@@ -72,7 +74,7 @@ contract Escrow {
             SellerDecided(Decision.Reject);
         }
 
-        buyer.transfer(address(this).balance);
         Concluded(Decision.Reject);
+        buyer.transfer(address(this).balance);
     }
 }
