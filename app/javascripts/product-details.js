@@ -183,7 +183,6 @@ export default {
       }
 
       if (_product.status.toString() === ProductStatus.Sold) {
-        $productInfo.append('<span class="badge badge-warning">Product Sold!</span>')
         $('#btnBuy').hide()
         $('#btnAccept').hide()
         $('#btnReject').hide()

@@ -8,7 +8,7 @@ contract EscrowFactory {
     }
 
     function createEscrow(address seller, uint productId) public payable {
-        address a = address((new Escrow).value(msg.value)(msg.sender, seller));
+        address a = address((new Escrow).value(msg.value)(address(this), msg.sender, seller));
         EscrowCreated(a, productId);
     }
 }
@@ -20,6 +20,8 @@ contract Escrow {
     address public buyer;
     address public seller;
 
+    address public feeTaker;
+
     Decision public buyerDecision;
     Decision public sellerDecision;
 
@@ -27,9 +29,10 @@ contract Escrow {
     event SellerDecided(Decision decision);
     event Concluded(Decision decision);
 
-    function Escrow(address _buyer, address _seller) public payable {
+    function Escrow(address _feeTaker, address _buyer, address _seller) public payable {
         createdAt = now;
 
+        feeTaker = _feeTaker;
         buyer = _buyer;
         seller = _seller;
     }
@@ -47,7 +50,11 @@ contract Escrow {
         }
 
         if (buyerDecision == Decision.Accept && sellerDecision == Decision.Accept) {
-            seller.transfer(address(this).balance);
+            uint amount = address(this).balance;
+            uint fee = amount / 100; // 1% fee
+            uint sellerGetAmount = amount - fee;
+            seller.transfer(sellerGetAmount);
+            feeTaker.transfer(fee);
             Concluded(Decision.Accept);
         }
     }
