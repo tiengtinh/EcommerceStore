@@ -48,7 +48,7 @@ contract EcommerceStore {
         ProductStatusChanged(_id, ProductStatus.Buying, _escrow);
     }
 
-    function endProductBuying(uint _id, ProductStatus _status) public {
+    function finalizeProductBuying(uint _id, ProductStatus _status) public {
         require(_status == ProductStatus.Sold || _status == ProductStatus.Unsold);
         address store = productIdInStore[_id];
         stores[store][_id].status = _status;

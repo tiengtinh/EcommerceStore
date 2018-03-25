@@ -74,32 +74,6 @@ export default {
       this.renderProduct()
     })
 
-    const escrowFactory = await EscrowFactory.deployed()
-    console.log('escrowFactory address: ', escrowFactory.address)
-
-    escrowFactory.EscrowCreated().watch(async (err, result) => {
-      console.log('EscrowCreated', err, result)
-
-      try {
-        const productId = result.args.productId
-        if (productId.toString() !== _product.id.toString()) return
-
-        const escrowAddress = result.args.newAddress
-        console.log({
-          productId, escrowAddress
-        })
-
-        // only buyer who hit buy button would need to also make this call to update product status to buying
-        if (this.isSeller()) return
-        if (escrowCreatedTrigged[escrowAddress]) return
-
-        await ecommerceStore.buyProductWithEscrow(productId, escrowAddress)
-        escrowCreatedTrigged[escrowAddress] = true
-      } catch (err) {
-        console.error('EscrowCreated error: ', err)
-      }
-    })
-
     await this.watchEscrowEvents()
   },
 
@@ -134,16 +108,11 @@ export default {
             alert('Your product is sold! You should receive ETH soon!')
           } else {
             alert('Bought product! Seller should receive ETH soon!')
-            await ecommerceStore.endProductBuying(productId, ProductStatus.Sold) // NOTE : any better way instead of doing this from the frontend?
           }
         }
 
         if (result.args.decision.toString() === Decision.Reject) {
-          await ecommerceStore.endProductBuying(productId, ProductStatus.Unsold)
           alert('Escrow rejected! ETH will be refunded to buyer soon!')
-          if (!this.isSeller()) {
-            await ecommerceStore.endProductBuying(productId, ProductStatus.Unsold) // NOTE : any better way instead of doing this from the frontend?
-          }
         }
         
       } catch (err) {
@@ -250,7 +219,8 @@ export default {
       console.log('buying productId: ', productId)
 
       const instance = await this.EscrowFactory.deployed()
-      const result = await instance.createEscrow(_product.store, productId, {
+      const ecommerceStore = await this.EcommerceStore.deployed()
+      const result = await instance.createEscrow(ecommerceStore.address, _product.store, productId, {
         value: _product.price,
       })
       console.log('buy result: ', result)
