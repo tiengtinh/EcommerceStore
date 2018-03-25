@@ -4,10 +4,10 @@ contract EscrowFactory {
     event EscrowCreated(address newAddress, uint productId);
 
     function EscrowFactory() public {
-
     }
 
     function createEscrow(address seller, uint productId) public payable {
+        // EscrowFactory will take the fee
         address a = address((new Escrow).value(msg.value)(address(this), msg.sender, seller));
         EscrowCreated(a, productId);
     }
