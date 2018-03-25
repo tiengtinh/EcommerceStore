@@ -35,6 +35,7 @@ contract Escrow {
     event Concluded(Decision decision);
 
     function Escrow(address _ecommerceStore, address _buyer, address _seller, uint _productId) public payable {
+        require(_buyer != _seller);
         createdAt = now;
 
         ecommerceStore = _ecommerceStore;
@@ -80,7 +81,11 @@ contract Escrow {
             SellerDecided(Decision.Reject);
         }
 
-        buyer.transfer(address(this).balance);
+        uint amount = address(this).balance;
+        uint fee = amount / 100; // 1% fee stay in escrow
+        uint buyerRefundAmount = amount - fee;
+
+        buyer.transfer(buyerRefundAmount);
 
         EcommerceStore(ecommerceStore).finalizeProductBuying(productId, EcommerceStore.ProductStatus.Unsold);
         Concluded(Decision.Reject);
