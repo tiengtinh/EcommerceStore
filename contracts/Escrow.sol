@@ -8,7 +8,7 @@ contract EscrowFactory {
     }
 
     function createEscrow(address seller, uint productId) public payable {
-        address a = address((new Escrow).value(msg.value)(seller));
+        address a = address((new Escrow).value(msg.value)(msg.sender, seller));
         EscrowCreated(a, productId);
     }
 }
@@ -27,14 +27,14 @@ contract Escrow {
     event SellerDecided(Decision decision);
     event Concluded(Decision decision);
 
-    function Escrow(address _seller) public payable {
+    function Escrow(address _buyer, address _seller) public payable {
         createdAt = now;
 
-        buyer = msg.sender;
+        buyer = _buyer;
         seller = _seller;
     }
 
-    function accept() public {
+    function accept() public payable {
         require(msg.sender == buyer || msg.sender == seller);
         if (msg.sender == buyer) {
             buyerDecision = Decision.Accept;
@@ -52,7 +52,7 @@ contract Escrow {
         }
     }
 
-    function reject() public {
+    function reject() public payable {
         require(msg.sender == buyer || msg.sender == seller);
 
         if (msg.sender == buyer) {

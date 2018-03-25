@@ -47,9 +47,11 @@ window.App = {
       Escrow.setProvider(web3.currentProvider);
       Escrow.web3.eth.defaultAccount = web3.eth.accounts[0]
 
+      const isProductDetailsPage = ($('#product-details').length !== 0)
+
       console.log('Get the initial account balance')
       // Get the initial account balance so it can be displayed.
-      web3.eth.getAccounts(function (err, accs) {
+      web3.eth.getAccounts(async function (err, accs) {
         if (err != null) {
           alert("There was an error fetching your accounts.")
           return
@@ -62,12 +64,15 @@ window.App = {
 
         accounts = accs
         account = accounts[0]
+
+        if (isProductDetailsPage) {
+          await ProductDetails.start({
+            account, EcommerceStore, EscrowFactory, Escrow,
+          })
+        }
       })
 
-      if ($('#product-details').length !== 0) {
-        await ProductDetails.start({
-          EcommerceStore, EscrowFactory, Escrow,
-        })
+      if (isProductDetailsPage) {
         return
       }
 
@@ -134,24 +139,7 @@ window.App = {
   renderProduct (product) {
     const isSeller = product.store === account
 
-    let isBuying = false
-    // let selfDecisionMade = false
-    // let partnerDecisionMade = false
-    if (product.status.toString() === ProductStatus.Buying && !new BigNumber(product.escrow).equals(0)) {
-      isBuying = true
-
-      // const escrow = Escrow.at(product.escrow)
-      // const buyerDecision = await escrow.buyerDecision()
-      // const sellerDecision = await escrow.sellerDecision()
-
-      // if (isSeller && sellerDecision.toString() !== Decision.Undecided) {
-      //   selfDecisionMade = true
-      // }
-
-      // if (!isSeller && buyerDecision.toString() !== Decision.Undecided) {
-      //   partnerDecisionMade = true
-      // }
-    }
+    let isBuying = product.status.toString() === ProductStatus.Buying
 
     return `
       <div class="col-lg-4 col-md-6 mb-4">
@@ -189,26 +177,6 @@ window.App = {
     _$products.append($tmp.html())
   },
 
-  async acceptEscrow(productId) {
-    console.log('acceptEscrow productId: ', productId)
-
-    const product = _products.find((p) => p.id.toString() === productId.toString())
-
-    const instance = await Escrow.at(product.escrow)
-    const result = await instance.accept()
-    console.log('acceptEscrow result: ', result)
-  },
-
-  async rejectEscrow(productId) {
-    console.log('rejectEscrow productId: ', productId)
-
-    const product = _products.find((p) => p.id.toString() === productId.toString())
-
-    const instance = await Escrow.at(product.escrow)
-    const result = await instance.reject()
-    console.log('rejectEscrow result: ', result)
-  },
-
   async listenContractEvents () {
     console.log('listen to contract events')
 
@@ -234,6 +202,7 @@ window.App = {
 
       const productId = result.args.id
       const product = _products.find((p) => p.id.toString() === productId.toString())
+      if (!product) return
       product.status = result.args.status
       product.escrow = result.args.escrow
 
