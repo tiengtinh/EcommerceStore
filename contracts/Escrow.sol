@@ -6,7 +6,6 @@ contract EscrowFactory {
     event EscrowCreated(address newAddress, uint productId);
 
     function EscrowFactory() public {
-
     }
 
     function createEscrow(address ecommerceStore, address seller, uint productId) public payable {
