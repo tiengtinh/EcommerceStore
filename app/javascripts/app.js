@@ -28,6 +28,8 @@ var accounts;
 var account;
 
 let _products = []
+let _category = ''
+let _status = ''
 let _$products
 
 const ProductStatus = {
@@ -78,6 +80,7 @@ window.App = {
 
       console.log('binding page events')
 
+      // page events
       let reader
       $('#image').on('change', function (event) {
         const file = event.target.files[0]
@@ -103,12 +106,27 @@ window.App = {
         this.acceptEscrow(productId).catch(err => console.error('acceptEscrow error: ', err))
       })
 
+      $('#categories-list > a').on('click', (event) => {
+        event.preventDefault()
+        $('#categories-list > a').removeClass('active')
+        _category = $(event.target).addClass('active').html().trim()
+        this.getProducts()
+      })
+
+      $('.status-filterer').on('click', (event) => {
+        event.preventDefault()
+        $('.status-filterer').removeClass('active')
+        _status = $(event.target).addClass('active').data('status')
+        this.getProducts()
+      })
+
       _$products = $('.products')
 
       if (_$products.length !== 0) {
         await this.getProducts()
       }
 
+      // contract events
       await this.listenContractEvents()
     } catch (err) {
       console.error('app error: ', err)
@@ -116,15 +134,19 @@ window.App = {
   },
 
   async getProducts () {
-    const response = await fetch('/api/products')
-    const resp = await response.json()
-    _products = resp.data.map((p) => {
-      p.id = p._id
-      delete p._id
-      return p
-    })
+    try {
+      const response = await fetch(`/api/products?category=${ _category }&status=${ _status }`)
+      const resp = await response.json()
+      _products = resp.data.map((p) => {
+        p.id = p._id
+        delete p._id
+        return p
+      })
 
-    this.renderProducts()
+      this.renderProducts()
+    } catch (err) {
+      console.error('getProducts error: ', err)
+    }
   },
 
   renderStatusBadge (status) {

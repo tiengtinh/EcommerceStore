@@ -80,7 +80,15 @@ app.get('/products', async function (req, res) {
   try {
     const db = await connectMgo()
 
-    const products = await db.collection('products').find().toArray()
+    const filterer = {}
+    if (req.query.category) {
+      filterer['category'] = req.query.category
+    }
+    if (req.query.status) {
+      filterer['status'] = req.query.status
+    }
+
+    const products = await db.collection('products').find(filterer).toArray()
 
     res.send({
       data: products

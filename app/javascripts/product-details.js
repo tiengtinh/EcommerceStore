@@ -108,7 +108,7 @@ export default {
     const ecommerceStore = await this.EcommerceStore.deployed()
 
     const escrow = this.Escrow.at(_product.escrow)
-    const balance = await web3.eth.getBalance(escrow.address, function(err, result) {
+    web3.eth.getBalance(escrow.address, function(err, result) {
       console.log('escrow balance: ', err, result)
     })
     console.log('watching escrow: ', _product.escrow)

@@ -2,6 +2,11 @@
 EcommerceStore.deployed().then((i) => i.getProduct(1) );
 
 EcommerceStore.deployed().then((i) => i.addProduct('TV', 'electronic', 'bla', 'awesome product', 100) );
+
+escrowFactoryAddress = EscrowFactory.deployed().then((i) => i.address );
+
+EscrowFactory.deployed().then((i) => web3.eth.getBalance(i.address, function(err, result) { console.log('balance: ', result.toString()) }) );
+
 ```
 
 ```
